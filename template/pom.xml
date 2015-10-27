@@ -16,7 +16,38 @@
     <name>Arquillian Container OpenShift Template</name>
     <description>Cloud Enablement integrations for Templates</description>
 
+    <properties>
+        <version.org.infinispan>6.3.1.Final-redhat-1</version.org.infinispan>
+    </properties>
+
+    <dependencyManagement>
+        <dependencies>
+            <dependency>
+                <groupId>org.infinispan</groupId>
+                <artifactId>infinispan-bom</artifactId>
+                <version>${version.org.infinispan}</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
+        </dependencies>
+    </dependencyManagement>
+
     <dependencies>
+
+        <!-- Import the infinispan core -->
+        <dependency>
+            <groupId>org.infinispan</groupId>
+            <artifactId>infinispan-core</artifactId>
+            <scope>compile</scope>
+        </dependency>
+
+        <!-- Import the Infinispan client hotrod -->
+        <dependency>
+            <groupId>org.infinispan</groupId>
+            <artifactId>infinispan-client-hotrod</artifactId>
+            <scope>compile</scope>
+        </dependency>
+
 
         <dependency>
             <groupId>org.jboss.arquillian.container</groupId>

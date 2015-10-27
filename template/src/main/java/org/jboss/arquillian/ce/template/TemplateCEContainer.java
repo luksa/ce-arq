@@ -177,7 +177,8 @@ public class TemplateCEContainer extends AbstractCEContainer<TemplateCEConfigura
             throw new IllegalArgumentException("Cannot deploy non .war deployments!");
         }
 
-        return "ROOT.war"; // TODO -- handle .ear?
+        return archive.getName();
+//        return "ROOT.war"; // TODO -- handle .ear?
     }
 
     protected String commitDeployment(Archive<?> archive) throws Exception {
