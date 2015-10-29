@@ -14,7 +14,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jboss.test.arquillian.ce;
+package org.jboss.test.arquillian.ce.deployment;
 
 import java.io.IOException;
 import java.net.InetSocketAddress;
@@ -35,15 +35,15 @@ import net.spy.memcached.auth.PlainCallbackHandler;
  * @author Martin Gencur
  *
  */
-class MemcachedCache<K, V> implements ConcurrentMap<K, V> {
+public class MemcachedCache<K, V> implements ConcurrentMap<K, V> {
 
     private MemcachedClient client;
 
-    MemcachedCache(String hostname, int port) {
+    public MemcachedCache(String hostname, int port) {
         this(hostname, port, false);
     }
 
-    MemcachedCache(String hostname, int port, boolean useSasl) {
+    public MemcachedCache(String hostname, int port, boolean useSasl) {
         try {
 
             if (useSasl) {

@@ -14,7 +14,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jboss.test.arquillian.ce;
+package org.jboss.test.arquillian.ce.deployment;
 
 import java.io.BufferedOutputStream;
 import java.io.FileNotFoundException;
@@ -33,7 +33,7 @@ import java.util.concurrent.ConcurrentMap;
  * @author Manik Surtani
  *
  */
-class RESTCache<K, V> implements ConcurrentMap<K, V> {
+public class RESTCache<K, V> implements ConcurrentMap<K, V> {
     String cacheName;
     String basicUrl;
 
@@ -41,7 +41,7 @@ class RESTCache<K, V> implements ConcurrentMap<K, V> {
     private static final String PUT = "PUT";
     private static final String DELETE = "DELETE";
 
-    RESTCache(String cacheName, String restServerURL) {
+    public RESTCache(String cacheName, String restServerURL) {
         this.cacheName = cacheName;
         this.basicUrl = restServerURL + cacheName;
     }
