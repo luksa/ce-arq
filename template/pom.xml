@@ -18,6 +18,9 @@
 
     <properties>
         <version.org.infinispan>6.3.1.Final-redhat-1</version.org.infinispan>
+
+        <!--Spu Memcached version -->
+        <spymemcached.version>2.8.1</spymemcached.version>
     </properties>
 
     <dependencyManagement>
@@ -28,6 +31,14 @@
                 <version>${version.org.infinispan}</version>
                 <type>pom</type>
                 <scope>import</scope>
+            </dependency>
+
+            <!-- Manage the Spy memcached version -->
+            <dependency>
+                <groupId>com.google.code.simple-spring-memcached</groupId>
+                <artifactId>spymemcached</artifactId>
+                <version>${spymemcached.version}</version>
+                <scope>compile</scope>
             </dependency>
         </dependencies>
     </dependencyManagement>
@@ -48,6 +59,12 @@
             <scope>compile</scope>
         </dependency>
 
+        <!-- Import the Spy memcached dependency -->
+        <dependency>
+            <groupId>com.google.code.simple-spring-memcached</groupId>
+            <artifactId>spymemcached</artifactId>
+            <scope>compile</scope>
+        </dependency>
 
         <dependency>
             <groupId>org.jboss.arquillian.container</groupId>

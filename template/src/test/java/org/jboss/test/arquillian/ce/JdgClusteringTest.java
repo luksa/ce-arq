@@ -25,17 +25,16 @@ package org.jboss.test.arquillian.ce;
 
 import java.util.logging.Logger;
 
-import junit.framework.Assert;
-import org.infinispan.client.hotrod.RemoteCache;
-import org.infinispan.client.hotrod.RemoteCacheManager;
-import org.infinispan.client.hotrod.configuration.ConfigurationBuilder;
 import org.jboss.arquillian.ce.api.Template;
 import org.jboss.arquillian.container.test.api.Deployment;
+import org.jboss.arquillian.container.test.api.RunAsClient;
 import org.jboss.arquillian.junit.Arquillian;
 import org.jboss.shrinkwrap.api.ShrinkWrap;
 import org.jboss.shrinkwrap.api.spec.WebArchive;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+
+import static junit.framework.Assert.assertEquals;
 
 /**
  * @author <a href="mailto:ales.justin@jboss.org">Ales Justin</a>
@@ -44,6 +43,10 @@ import org.junit.runner.RunWith;
 @Template(url = "https://raw.githubusercontent.com/luksa/application-templates/JDG/datagrid/datagrid65-basic-s2i.json")
 public class JdgClusteringTest {
     private static Logger log = Logger.getLogger(JdgClusteringTest.class.getName());
+    public static final String NAMESPACE = "mluksa";
+    public static final String JDG_HOST = "jdg-app-" + NAMESPACE + ".router.default.svc.cluster.local";
+    public static final int JDG_PORT = 80;
+    public static final String CONTEXT_PATH = "/rest";
 
     @Deployment
     public static WebArchive getDeployment() throws Exception {
@@ -51,17 +54,11 @@ public class JdgClusteringTest {
     }
 
     @Test
-    public void testBasic() throws Exception {
-        ConfigurationBuilder builder = new ConfigurationBuilder();
-        builder.addServer()
-                .host("jdg-app-mluksa.router.default.svc.cluster.local")
-                .port(11222);
-        RemoteCacheManager cacheManager = new RemoteCacheManager(builder.build());
-        RemoteCache<Object, Object> cache = cacheManager.getCache("myCache");
-
-        cache.put("foo", "bar");
-
-        Assert.assertEquals("bar", cache.get("foo"));
+    @RunAsClient
+    public void testRest() throws Exception {
+        RESTCache<String, Object> cache = new RESTCache<String, Object>("default", "http://" + JDG_HOST + ":" + JDG_PORT + CONTEXT_PATH + "/");
+        cache.put("foo1", "bar1");
+        assertEquals("bar1", cache.get("foo1"));
     }
 
 }
