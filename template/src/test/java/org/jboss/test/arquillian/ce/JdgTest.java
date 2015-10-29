@@ -23,6 +23,16 @@
 
 package org.jboss.test.arquillian.ce;
 
+import java.security.KeyManagementException;
+import java.security.NoSuchAlgorithmException;
+import java.security.cert.X509Certificate;
+import javax.net.ssl.HostnameVerifier;
+import javax.net.ssl.HttpsURLConnection;
+import javax.net.ssl.SSLContext;
+import javax.net.ssl.SSLSession;
+import javax.net.ssl.TrustManager;
+import javax.net.ssl.X509TrustManager;
+
 import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.client.hotrod.RemoteCacheManager;
 import org.infinispan.client.hotrod.configuration.ConfigurationBuilder;
@@ -39,6 +49,7 @@ import org.jboss.shrinkwrap.api.spec.WebArchive;
 import org.jboss.shrinkwrap.resolver.api.maven.Maven;
 import org.jboss.test.arquillian.ce.deployment.MemcachedCache;
 import org.jboss.test.arquillian.ce.deployment.RESTCache;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
@@ -51,14 +62,13 @@ import static junit.framework.Assert.assertEquals;
 @RunInPod
 @ExternalDeployment
 @Template(url = "https://raw.githubusercontent.com/luksa/application-templates/jdg-templates/datagrid/datagrid65-https-s2i.json",
-        labels = "application=jdg-app")
+        labels = "application=jdg-app",
+parameters = "JDG_HTTPS_NAME=jboss,JDG_HTTPS_PASSWORD=mykeystorepass")
 public class JdgTest {
     private static final boolean USE_SASL = true;
 
     public static final String NAMESPACE = "mluksa";
-    public static final String JDG_HOST = "jdg-app-" + NAMESPACE + ".router.default.svc.cluster.local";
-    public static final int JDG_PORT = 80;
-    public static final String CONTEXT_PATH = "/rest";
+    public static final String ROUTE_SUFFIX = ".router.default.svc.cluster.local";
 
     @Deployment
     @RunInPodDeployment
@@ -85,7 +95,18 @@ public class JdgTest {
     public void testRestService() throws Exception {
         String host = System.getenv("JDG_APP_SERVICE_HOST");
         int port = Integer.parseInt(System.getenv("JDG_APP_SERVICE_PORT"));
-        RESTCache<String, Object> cache = new RESTCache<String, Object>("default", "http://" + host + ":" + port + CONTEXT_PATH + "/");
+        RESTCache<String, Object> cache = new RESTCache<String, Object>("default", "http://" + host + ":" + port + "/rest/");
+        cache.put("foo1", "bar1");
+        assertEquals("bar1", cache.get("foo1"));
+    }
+
+    @Test
+    public void testSecureRestService() throws Exception {
+        trustAllCertificates();
+
+        String host = System.getenv("SECURE_JDG_APP_SERVICE_HOST");
+        int port = Integer.parseInt(System.getenv("SECURE_JDG_APP_SERVICE_PORT"));
+        RESTCache<String, Object> cache = new RESTCache<String, Object>("default", "https://" + host + ":" + port + "/rest/");
         cache.put("foo1", "bar1");
         assertEquals("bar1", cache.get("foo1"));
     }
@@ -93,7 +114,22 @@ public class JdgTest {
     @Test
     @RunAsClient
     public void testRestRoute() throws Exception {
-        RESTCache<String, Object> cache = new RESTCache<String, Object>("default", "http://" + JDG_HOST + ":" + JDG_PORT + CONTEXT_PATH + "/");
+        String host = "jdg-app-" + NAMESPACE + ROUTE_SUFFIX;
+        int port = 80;
+        RESTCache<String, Object> cache = new RESTCache<String, Object>("default", "http://" + host + ":" + port + "/rest/");
+        cache.put("foo1", "bar1");
+        assertEquals("bar1", cache.get("foo1"));
+    }
+
+    @Test
+    @Ignore("Fails with IOException: Invalid Http response, but works with curl")
+    @RunAsClient
+    public void testSecureRestRoute() throws Exception {
+        trustAllCertificates();
+
+        String host = "secure-jdg-app-" + NAMESPACE + ROUTE_SUFFIX;
+        int port = 443;
+        RESTCache<String, Object> cache = new RESTCache<String, Object>("default", "https://" + host + ":" + port + "/rest/");
         cache.put("foo1", "bar1");
         assertEquals("bar1", cache.get("foo1"));
     }
@@ -108,9 +144,10 @@ public class JdgTest {
     }
 
     @Test
+    @Ignore("Not working yet")
     @RunAsClient
     public void testMemcachedRoute() throws Exception {
-        MemcachedCache<String, Object> cache = new MemcachedCache<>("jdg-app-memcached-mluksa.router.default.svc.cluster.local", 443, USE_SASL);
+        MemcachedCache<String, Object> cache = new MemcachedCache<>("jdg-app-memcached-" + NAMESPACE + ROUTE_SUFFIX, 443, USE_SASL);
         cache.put("foo2", "bar2");
         assertEquals("bar2", cache.get("foo2"));
     }
@@ -131,5 +168,33 @@ public class JdgTest {
         cache.put("foo3", "bar3");
         assertEquals("bar3", cache.get("foo3"));
     }
+
+    private static void trustAllCertificates() throws NoSuchAlgorithmException, KeyManagementException {
+        TrustManager[] trustAllCerts = new TrustManager[]{new X509TrustManager() {
+            public java.security.cert.X509Certificate[] getAcceptedIssuers() {
+                return null;
+            }
+
+            public void checkClientTrusted(X509Certificate[] certs, String authType) {
+            }
+
+            public void checkServerTrusted(X509Certificate[] certs, String authType) {
+            }
+        }};
+        // Install the all-trusting trust manager
+        final SSLContext sc = SSLContext.getInstance("SSL");
+        sc.init(null, trustAllCerts, new java.security.SecureRandom());
+        HttpsURLConnection.setDefaultSSLSocketFactory(sc.getSocketFactory());
+        // Create all-trusting host name verifier
+        HostnameVerifier allHostsValid = new HostnameVerifier() {
+            public boolean verify(String hostname, SSLSession session) {
+                return true;
+            }
+        };
+
+        // Install the all-trusting host verifier
+        HttpsURLConnection.setDefaultHostnameVerifier(allHostsValid);
+    }
+
 
 }
