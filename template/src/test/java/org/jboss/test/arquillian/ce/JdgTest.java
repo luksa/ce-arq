@@ -49,7 +49,6 @@ import org.jboss.shrinkwrap.api.spec.WebArchive;
 import org.jboss.shrinkwrap.resolver.api.maven.Maven;
 import org.jboss.test.arquillian.ce.deployment.MemcachedCache;
 import org.jboss.test.arquillian.ce.deployment.RESTCache;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
@@ -61,8 +60,8 @@ import static junit.framework.Assert.assertEquals;
 @RunWith(Arquillian.class)
 @RunInPod
 @ExternalDeployment
-@Template(url = "https://raw.githubusercontent.com/luksa/application-templates/jdg-templates/datagrid/datagrid65-https-s2i.json",
-        labels = "application=jdg-app",
+@Template(url = "https://raw.githubusercontent.com/luksa/application-templates/memcached_route/datagrid/datagrid65-https.json",
+        labels = "application=datagrid-app",
 parameters = "JDG_HTTPS_NAME=jboss,JDG_HTTPS_PASSWORD=mykeystorepass")
 public class JdgTest {
     private static final boolean USE_SASL = true;
@@ -93,8 +92,8 @@ public class JdgTest {
 
     @Test
     public void testRestService() throws Exception {
-        String host = System.getenv("JDG_APP_SERVICE_HOST");
-        int port = Integer.parseInt(System.getenv("JDG_APP_SERVICE_PORT"));
+        String host = System.getenv("DATAGRID_APP_SERVICE_HOST");
+        int port = Integer.parseInt(System.getenv("DATAGRID_APP_SERVICE_PORT"));
         RESTCache<String, Object> cache = new RESTCache<String, Object>("default", "http://" + host + ":" + port + "/rest/");
         cache.put("foo1", "bar1");
         assertEquals("bar1", cache.get("foo1"));
@@ -104,8 +103,8 @@ public class JdgTest {
     public void testSecureRestService() throws Exception {
         trustAllCertificates();
 
-        String host = System.getenv("SECURE_JDG_APP_SERVICE_HOST");
-        int port = Integer.parseInt(System.getenv("SECURE_JDG_APP_SERVICE_PORT"));
+        String host = System.getenv("SECURE_DATAGRID_APP_SERVICE_HOST");
+        int port = Integer.parseInt(System.getenv("SECURE_DATAGRID_APP_SERVICE_PORT"));
         RESTCache<String, Object> cache = new RESTCache<String, Object>("default", "https://" + host + ":" + port + "/rest/");
         cache.put("foo1", "bar1");
         assertEquals("bar1", cache.get("foo1"));
@@ -114,7 +113,7 @@ public class JdgTest {
     @Test
     @RunAsClient
     public void testRestRoute() throws Exception {
-        String host = "jdg-app-" + NAMESPACE + ROUTE_SUFFIX;
+        String host = "datagrid-app-" + NAMESPACE + ROUTE_SUFFIX;
         int port = 80;
         RESTCache<String, Object> cache = new RESTCache<String, Object>("default", "http://" + host + ":" + port + "/rest/");
         cache.put("foo1", "bar1");
@@ -122,12 +121,12 @@ public class JdgTest {
     }
 
     @Test
-    @Ignore("Fails with IOException: Invalid Http response, but works with curl")
+//    @Ignore("Fails with IOException: Invalid Http response, but works with curl")
     @RunAsClient
     public void testSecureRestRoute() throws Exception {
         trustAllCertificates();
 
-        String host = "secure-jdg-app-" + NAMESPACE + ROUTE_SUFFIX;
+        String host = "secure-datagrid-app-" + NAMESPACE + ROUTE_SUFFIX;
         int port = 443;
         RESTCache<String, Object> cache = new RESTCache<String, Object>("default", "https://" + host + ":" + port + "/rest/");
         cache.put("foo1", "bar1");
@@ -136,26 +135,33 @@ public class JdgTest {
 
     @Test
     public void testMemcachedService() throws Exception {
-        String host = System.getenv("JDG_APP_MEMCACHED_SERVICE_HOST");
-        int port = Integer.parseInt(System.getenv("JDG_APP_MEMCACHED_SERVICE_PORT"));
+        String host = System.getenv("DATAGRID_APP_MEMCACHED_SERVICE_HOST");
+        int port = Integer.parseInt(System.getenv("DATAGRID_APP_MEMCACHED_SERVICE_PORT"));
         MemcachedCache<String, Object> cache = new MemcachedCache<>(host, port);
         cache.put("foo2", "bar2");
         assertEquals("bar2", cache.get("foo2"));
     }
 
     @Test
-    @Ignore("Not working yet")
     @RunAsClient
     public void testMemcachedRoute() throws Exception {
-        MemcachedCache<String, Object> cache = new MemcachedCache<>("jdg-app-memcached-" + NAMESPACE + ROUTE_SUFFIX, 443, USE_SASL);
+        MemcachedCache<String, Object> cache = new MemcachedCache<>("datagrid-app-memcached-" + NAMESPACE + ROUTE_SUFFIX, 443);
+        cache.put("foo2", "bar2");
+        assertEquals("bar2", cache.get("foo2"));
+    }
+
+    @Test
+    @RunAsClient
+    public void testMemcachedRouteWithSasl() throws Exception {
+        MemcachedCache<String, Object> cache = new MemcachedCache<>("datagrid-app-memcached-" + NAMESPACE + ROUTE_SUFFIX, 443, USE_SASL);
         cache.put("foo2", "bar2");
         assertEquals("bar2", cache.get("foo2"));
     }
 
     @Test
     public void testHotRodService() throws Exception {
-        String host = System.getenv("JDG_APP_HOTROD_SERVICE_HOST");
-        int port = Integer.parseInt(System.getenv("JDG_APP_HOTROD_SERVICE_PORT"));
+        String host = System.getenv("DATAGRID_APP_HOTROD_SERVICE_HOST");
+        int port = Integer.parseInt(System.getenv("DATAGRID_APP_HOTROD_SERVICE_PORT"));
 
         RemoteCacheManager cacheManager = new RemoteCacheManager(
                 new ConfigurationBuilder()
