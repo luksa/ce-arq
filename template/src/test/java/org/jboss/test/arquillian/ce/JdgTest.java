@@ -40,6 +40,7 @@ import org.jboss.arquillian.ce.api.ExternalDeployment;
 import org.jboss.arquillian.ce.api.RunInPod;
 import org.jboss.arquillian.ce.api.RunInPodDeployment;
 import org.jboss.arquillian.ce.api.Template;
+import org.jboss.arquillian.ce.api.TemplateParameter;
 import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.arquillian.container.test.api.RunAsClient;
 import org.jboss.arquillian.junit.Arquillian;
@@ -49,6 +50,7 @@ import org.jboss.shrinkwrap.api.spec.WebArchive;
 import org.jboss.shrinkwrap.resolver.api.maven.Maven;
 import org.jboss.test.arquillian.ce.deployment.MemcachedCache;
 import org.jboss.test.arquillian.ce.deployment.RESTCache;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
@@ -60,9 +62,11 @@ import static junit.framework.Assert.assertEquals;
 @RunWith(Arquillian.class)
 @RunInPod
 @ExternalDeployment
-@Template(url = "https://raw.githubusercontent.com/luksa/application-templates/memcached_route/datagrid/datagrid65-https.json",
+@Template(url = "https://raw.githubusercontent.com/jboss-openshift/application-templates/master/datagrid/datagrid65-https.json",
         labels = "application=datagrid-app",
-parameters = "JDG_HTTPS_NAME=jboss,JDG_HTTPS_PASSWORD=mykeystorepass")
+        parameters = {
+                @TemplateParameter(name = "JDG_HTTPS_NAME", value="jboss"),
+                @TemplateParameter(name = "JDG_HTTPS_PASSWORD", value="mykeystorepass")})
 public class JdgTest {
     private static final boolean USE_SASL = true;
 
@@ -143,6 +147,7 @@ public class JdgTest {
     }
 
     @Test
+    @Ignore("Currently there is no memcached route")
     @RunAsClient
     public void testMemcachedRoute() throws Exception {
         MemcachedCache<String, Object> cache = new MemcachedCache<>("datagrid-app-memcached-" + NAMESPACE + ROUTE_SUFFIX, 443);
@@ -151,6 +156,7 @@ public class JdgTest {
     }
 
     @Test
+    @Ignore("Currently there is no memcached route")
     @RunAsClient
     public void testMemcachedRouteWithSasl() throws Exception {
         MemcachedCache<String, Object> cache = new MemcachedCache<>("datagrid-app-memcached-" + NAMESPACE + ROUTE_SUFFIX, 443, USE_SASL);

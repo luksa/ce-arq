@@ -58,6 +58,17 @@
             <artifactId>infinispan-client-hotrod</artifactId>
             <scope>compile</scope>
         </dependency>
+        <dependency>
+            <groupId>org.infinispan</groupId>
+            <artifactId>infinispan-query-dsl</artifactId>
+            <scope>compile</scope>
+        </dependency>
+
+        <dependency>
+            <groupId>org.infinispan</groupId>
+            <artifactId>infinispan-remote-query-client</artifactId>
+            <scope>compile</scope>
+        </dependency>
 
         <!-- Import the Spy memcached dependency -->
         <dependency>
