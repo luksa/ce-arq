@@ -38,7 +38,38 @@ import java.util.logging.Level;
 
 import com.squareup.okhttp.Response;
 import io.fabric8.kubernetes.api.KubernetesHelper;
-import io.fabric8.kubernetes.api.model.*;
+import io.fabric8.kubernetes.api.model.Container;
+import io.fabric8.kubernetes.api.model.ContainerPort;
+import io.fabric8.kubernetes.api.model.DoneablePod;
+import io.fabric8.kubernetes.api.model.DoneableReplicationController;
+import io.fabric8.kubernetes.api.model.EnvVar;
+import io.fabric8.kubernetes.api.model.ExecAction;
+import io.fabric8.kubernetes.api.model.HTTPGetAction;
+import io.fabric8.kubernetes.api.model.Handler;
+import io.fabric8.kubernetes.api.model.HasMetadata;
+import io.fabric8.kubernetes.api.model.IntOrString;
+import io.fabric8.kubernetes.api.model.KubernetesList;
+import io.fabric8.kubernetes.api.model.Lifecycle;
+import io.fabric8.kubernetes.api.model.ObjectMeta;
+import io.fabric8.kubernetes.api.model.ObjectReference;
+import io.fabric8.kubernetes.api.model.PersistentVolume;
+import io.fabric8.kubernetes.api.model.PersistentVolumeClaim;
+import io.fabric8.kubernetes.api.model.Pod;
+import io.fabric8.kubernetes.api.model.PodList;
+import io.fabric8.kubernetes.api.model.PodSpec;
+import io.fabric8.kubernetes.api.model.PodTemplateSpec;
+import io.fabric8.kubernetes.api.model.Probe;
+import io.fabric8.kubernetes.api.model.ReplicationController;
+import io.fabric8.kubernetes.api.model.ReplicationControllerList;
+import io.fabric8.kubernetes.api.model.ReplicationControllerSpec;
+import io.fabric8.kubernetes.api.model.Secret;
+import io.fabric8.kubernetes.api.model.SecretVolumeSource;
+import io.fabric8.kubernetes.api.model.Service;
+import io.fabric8.kubernetes.api.model.ServiceAccount;
+import io.fabric8.kubernetes.api.model.ServicePort;
+import io.fabric8.kubernetes.api.model.ServiceSpec;
+import io.fabric8.kubernetes.api.model.Volume;
+import io.fabric8.kubernetes.api.model.VolumeMount;
 import io.fabric8.kubernetes.client.dsl.ClientNonNamespaceOperation;
 import io.fabric8.kubernetes.client.dsl.ClientPodResource;
 import io.fabric8.kubernetes.client.dsl.ClientRollableScallableResource;
@@ -51,6 +82,7 @@ import io.fabric8.openshift.api.model.DoneableTemplate;
 import io.fabric8.openshift.api.model.ImageStream;
 import io.fabric8.openshift.api.model.Project;
 import io.fabric8.openshift.api.model.RoleBinding;
+import io.fabric8.openshift.api.model.Route;
 import io.fabric8.openshift.api.model.Template;
 import io.fabric8.openshift.api.model.WebHookTriggerBuilder;
 import io.fabric8.openshift.client.OpenShiftClient;
@@ -463,6 +495,8 @@ public class F8OpenShiftAdapter extends AbstractOpenShiftAdapter {
             return new ImageStreamOpenShiftResourceHandle(content);
         } else if ("ServiceAccount".equalsIgnoreCase(kind)) {
             return new ServiceAccountOpenShiftResourceHandle(content);
+        } else if ("Route".equalsIgnoreCase(kind)) {
+            return new RouteOpenShiftResourceHandle(content);
         } else {
             throw new IllegalArgumentException(String.format("Kind '%s' not yet supported -- use Native OpenShift adapter!", kind));
         }
@@ -827,6 +861,20 @@ public class F8OpenShiftAdapter extends AbstractOpenShiftAdapter {
 
         public void delete() {
             client.serviceAccounts().inNamespace(configuration.getNamespace()).delete(resource);
+        }
+    }
+
+    private class RouteOpenShiftResourceHandle extends AbstractOpenShiftResourceHandle<Route> {
+        public RouteOpenShiftResourceHandle(String content) {
+            super(content);
+        }
+
+        protected Route createResource(InputStream stream) {
+            return client.routes().inNamespace(configuration.getNamespace()).load(stream).create();
+        }
+
+        public void delete() {
+            client.routes().inNamespace(configuration.getNamespace()).delete(resource);
         }
     }
 }
